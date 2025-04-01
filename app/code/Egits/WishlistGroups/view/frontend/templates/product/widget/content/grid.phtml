@@ -1,0 +1,349 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+use Magento\Catalog\Block\Product\ReviewRendererInterface;
+use Magento\Catalog\Helper\Product\Compare;
+use Egits\WishlistGroups\Block\Product\ProductsList;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\Escaper;
+use Magento\Wishlist\Helper\Data;
+
+/** @var Escaper $escaper */
+/** @var ProductsList $block */
+
+// phpcs:disable Generic.Files.LineLength.TooLong
+// phpcs:disable Magento2.Templates.ThisInTemplate.FoundHelper
+// phpcs:disable Magento2.Templates.ThisInTemplate.FoundThis
+?>
+<?php if ($exist = ($block->getProductCollection() && $block->getProductCollection()->count())): ?>
+    <?php
+    $type = 'widget-product-grid';
+    $mode = 'grid';
+    $image = 'new_products_content_widget_grid';
+    $items = $block->getProductCollection()->getItems();
+
+    $showWishlist = true;
+    $showCompare = true;
+    $showCart = true;
+    $templateType = ReviewRendererInterface::SHORT_VIEW;
+    $description = false;
+    ?>
+    <div class="block widget block-products-list <?= /* @noEscape */ $mode ?>">
+        <?php if ($block->getTitle()): ?>
+            <div class="block-title">
+                <strong><?= $escaper->escapeHtml(__($block->getTitle())) ?></strong>
+            </div>
+        <?php endif ?>
+        <div class="block-content">
+            <?= /* @noEscape */ '<!-- ' . $image . '-->' ?>
+            <div class="products-<?= /* @noEscape */ $mode ?> <?= /* @noEscape */ $mode ?>">
+                <ol class="product-items <?= /* @noEscape */ $type ?>">
+                    <?php $iterator = 1; ?>
+                    <?php foreach ($items as $_item): ?>
+                        <?= /* @noEscape */ ($iterator++ == 1) ? '<li class="product-item">' : '</li><li class="product-item">' ?>
+                        <div class="product-item-info">
+                            <a href="<?= $escaper->escapeUrl($block->getProductUrl($_item)) ?>" class="product-item-photo">
+                                <?= $block->getImage($_item, $image)->toHtml() ?>
+                            </a>
+                            <div class="product-item-details">
+                                <strong class="product-item-name">
+                                    <a title="<?= $escaper->escapeHtml($_item->getName()) ?>"
+                                       href="<?= $escaper->escapeUrl($block->getProductUrl($_item)) ?>"
+                                       class="product-item-link">
+                                        <?= $escaper->escapeHtml($_item->getName()) ?>
+                                    </a>
+                                </strong>
+                                <?php if ($templateType): ?>
+                                    <?= $block->getReviewsSummaryHtml($_item, $templateType) ?>
+                                <?php endif; ?>
+
+                                <?= $block->getProductPriceHtml($_item, $type) ?>
+
+                                <?= $block->getProductDetailsHtml($_item) ?>
+
+                                <?php if ($showWishlist || $showCompare || $showCart): ?>
+                                    <div class="product-item-inner">
+                                        <div class="product-item-actions">
+                                            <?php if ($showCart): ?>
+                                                <div class="actions-primary">
+                                                    <?php if ($_item->isSaleable()): ?>
+                                                        <?php $postParams = $block->getAddToCartPostParams($_item); ?>
+                                                        <form data-role="tocart-form" data-product-sku="<?= $escaper->escapeHtml($_item->getSku()) ?>" action="<?= $escaper->escapeUrl($postParams['action']) ?>" method="post">
+                                                            <input type="hidden" name="product" value="<?= $escaper->escapeHtmlAttr($postParams['data']['product']) ?>">
+                                                            <input type="hidden" name="<?= /* @noEscape */ Action::PARAM_NAME_URL_ENCODED ?>" value="<?= /* @noEscape */ $postParams['data'][Action::PARAM_NAME_URL_ENCODED] ?>">
+                                                            <?= $block->getBlockHtml('formkey') ?>
+                                                            <button type="submit"
+                                                                    title="<?= $escaper->escapeHtml(__('Add to Cart')) ?>"
+                                                                    class="action tocart primary">
+                                                                <span><?= $escaper->escapeHtml(__('Add to Cart')) ?></span>
+                                                            </button>
+                                                        </form>
+                                                        <?php if ($block->getBlockHtml('formkey')): ?>
+                                                        <script type="text/x-magento-init">
+                                                        {
+                                                            "[data-role=tocart-form], .form.map.checkout": {
+                                                                "catalogAddToCart": {
+                                                                    "product_sku": "<?= $escaper->escapeJs($_item->getSku()); ?>"
+                                                                }
+                                                            }
+                                                        }
+                                                        </script>
+                                                        <?php endif;?>
+                                                    <?php else: ?>
+                                                        <?php if ($_item->isAvailable()): ?>
+                                                            <div class="stock available"><span><?= $escaper->escapeHtml(__('In stock')) ?></span></div>
+                                                        <?php else: ?>
+                                                            <div class="stock unavailable"><span><?= $escaper->escapeHtml(__('Out of stock')) ?></span></div>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if ($showWishlist || $showCompare): ?>
+                                                <div class="actions-secondary" data-role="add-to-links">
+                                                    <?php if ($this->helper(Data::class)->isAllow() && $showWishlist): ?>
+                                                        <a href="#" id='wishlist-button'
+                                                           data-post='<?= /* @noEscape */ $block->getAddToWishlistParams($_item) ?>' class="action towishlist" data-action="add-to-wishlist" title="<?= $block->escapeHtmlAttr(__('Add to Wish List ')) ?>">
+                                                            <span><?= $escaper->escapeHtml(__('Add to Wish List ')) ?></span>
+                                                        </a>
+                                                    <?php endif; ?>
+                                                    <?php if ($block->getAddToCompareUrl() && $showCompare): ?>
+                                                        <?php $compareHelper = $this->helper(Compare::class);?>
+                                                        <a href="#" class="action tocompare" data-post='<?= /* @noEscape */ $compareHelper->getPostDataParams($_item) ?>' title="<?= $block->escapeHtmlAttr(__('Add to Compare')) ?>">
+                                                            <span><?= $escaper->escapeHtml(__('Add to Compare')) ?></span>
+                                                        </a>
+                                                    <?php endif; ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?= ($iterator == count($items) + 1) ? '</li>' : '' ?>
+                    <?php endforeach ?>
+                </ol>
+            </div>
+            <?= $block->getPagerHtml() ?>
+        </div>
+    </div>
+    
+<?php endif;?>
+<div id="wishlist-popup" class="wishlist-popup" style="display: none;">
+    <div class="popup-content">
+        <button id="create-new-wishlist-btn" class="action primary">
+            <span><?= __('Create New') ?></span>
+        </button>
+        <button id="add-existing-wishlist-btn" class="action secondary">
+            <span><?= __('Add to Existing') ?></span>
+        </button>
+        <div style="margin-bottom: 30px;"></div>
+
+        <!-- Create New Wishlist Form -->
+        <form id="new-wishlist-form" method="post" style="display: none;">
+            <fieldset class="fieldset">
+                <div class="field name">
+                    <label for="wishlist-name" class="label">
+                        <span><?= __('Wishlist Name') ?></span>
+                    </label>
+                    <div class="control">
+                        <input id="wishlist-name"
+                               class="input-text"
+                               type="text"
+                               name="wishlist_name"
+                               required>
+                    </div>
+                </div>
+                <div class="actions-toolbar">
+                    <div class="primary">
+                        <button class="action save primary" type="submit">
+                            <span><?= __('Save') ?></span>
+                        </button>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+
+        <!-- Existing Wishlist List -->
+        <div id="existing-wishlist-section" style="display: none;">
+            <label for="wishlist-select"><?= __('Select Wishlist') ?></label>
+            <select id="wishlist-select" class="input-select" style="margin-top: 10px;">
+                <!-- Wishlist options will be loaded dynamically -->
+            </select>
+
+            <button id="add-to-selected-wishlist" class="action primary" style="margin-top: 20px;">
+                <span><?= __('Add to Wishlist') ?></span>
+            </button>
+        </div>
+
+        <!-- <button class="action cancel" type="button">
+            <span><?= __('Cancel') ?></span>
+        </button> -->
+    </div>
+</div>
+<script type="text/javascript">
+    require([
+        'jquery',
+        'Magento_Ui/js/modal/modal',
+        'mage/url'
+    ], function ($, modal, urlBuilder) {
+
+        var popupElement = $('#wishlist-popup');
+        var clickedButton = null;
+        var productData = null;
+
+        if (popupElement.length) {
+            var popup = popupElement.modal({
+                type: 'popup',
+                title: 'Wishlist Options',
+                modalClass: 'wishlist-popup-modal',
+                responsive: true,
+                innerScroll: true,
+                buttons: []
+            });
+
+            // Open Popup
+            $('body').on('click', '#wishlist-button', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Reset popup content to its initial state
+                $('#new-wishlist-form').hide();
+                $('#existing-wishlist-section').hide();
+                $('#create-new-wishlist-btn').show();
+                $('#add-existing-wishlist-btn').show();
+
+                clickedButton = $(this);
+                productData = JSON.parse(clickedButton.attr('data-post') || '{}');
+                popupElement.modal('openModal');
+            });
+
+            // Create New Wishlist and Add Product
+            $('body').on('submit', '#new-wishlist-form', function (event) {
+                event.preventDefault();
+                var wishlistName = $('#wishlist-name').val().trim();
+
+                if (!wishlistName) {
+                    alert('Please enter a wishlist name.');
+                    return;
+                }
+
+                var productId = productData?.data?.product;
+                if (!productId) {
+                    alert('Product data is missing.');
+                    return;
+                }
+
+                var requestData = {
+                    name: wishlistName,
+                    product: productId
+                };
+
+                $.ajax({
+                    url: urlBuilder.build('wishlistgroups/index/save'),
+                    type: 'POST',
+                    dataType: 'json',
+                    data: requestData,
+                    showLoader: true,
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Wishlist Created & Product Added Successfully');
+                            popupElement.modal('closeModal');
+                        } else {
+                            alert(response.message || 'Error occurred while adding to wishlist.');
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("AJAX Error:", xhr.responseText);
+                        alert('Failed to process the request.');
+                    }
+                });
+            });
+
+            $('#add-existing-wishlist-btn').on('click', function () {
+                $('#existing-wishlist-section').show();
+                $('#new-wishlist-form').hide();
+
+                $.ajax({
+                    url: urlBuilder.build('wishlistgroups/index/listwishlist'),
+                    type: 'GET',
+                    dataType: 'json',
+                    showLoader: true,
+                    success: function (response) {
+                        var select = $('#wishlist-select');
+                        select.empty();
+
+                        if (response.success && response.wishlists.length > 0) {
+                            $.each(response.wishlists, function (index, wishlist) {
+                                select.append('<option value="' + wishlist.id + '">' + wishlist.name + '</option>');
+                            });
+                        } else {
+                            select.append('<option value="">' + 'No Wishlists Available' + '</option>');
+                        }
+                    },
+                    error: function (xhr) {
+                        console.error("Error fetching wishlists:", xhr.responseText);
+                        alert('Failed to load wishlists. Please try again.');
+                    }
+                });
+            });
+
+            $('#add-to-selected-wishlist').on('click', function () {
+                var wishlistId = $('#wishlist-select').val();
+
+                if (!wishlistId) {
+                    alert('Please select a wishlist.');
+                    return;
+                }
+
+                if (productData) {
+                    var productId = productData?.data?.product;
+
+                    if (!productId) {
+                        alert('Product data is missing.');
+                        return;
+                    }
+
+                    var requestData = {
+                        wishlist_id: wishlistId,
+                        product_id: productId
+                    };
+
+                    $.ajax({
+                        url: urlBuilder.build('wishlistgroups/index/existing'),
+                        type: 'POST',
+                        dataType: 'json',
+                        data: requestData,
+                        showLoader: true,
+                        success: function (response) {
+                            if (response.success) {
+                                alert('Product added to wishlist');
+                                popupElement.modal('closeModal');
+                            } else {
+                                alert(response.message || 'Error adding product.');
+                            }
+                        },
+                        error: function (xhr) {
+                            console.error("Error:", xhr.responseText);
+                            alert('Failed to add product to wishlist.');
+                        }
+                    });
+                }
+            });
+
+            $('#create-new-wishlist-btn').on('click', function () {
+                $('#new-wishlist-form').show();
+                $('#existing-wishlist-section').hide();
+            });
+
+            $('body').on('click', '.wishlist-popup .cancel', function () {
+                popupElement.modal('closeModal');
+            });
+        } else {
+            console.error("Wishlist popup element not found");
+        }
+    });
+
+</script>

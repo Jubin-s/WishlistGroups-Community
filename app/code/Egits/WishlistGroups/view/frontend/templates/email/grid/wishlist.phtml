@@ -1,0 +1,18 @@
+<?php
+if(!empty($block->getEmailFormData())):
+?>
+<?php $formData = $block->getEmailFormData();?>
+    <table cellpadding="5" cellspacing="2" border="1" width="100%">
+        <tr>
+            <th scope="col" class="col date"><?= /* @noEscape */ __('Product Name') ?></th>
+            <th scope="col" class="col total"><?= /* @noEscape */ __('Link') ?></th>
+        </tr>
+
+        <?php foreach ($formData as $data): ?>
+            <tr>
+                <td data-th="<?= $escaper->escapeHtml(__('Product Name')) ?>" class="col name"><?= /* @noEscape */ $data["name"] ?></td>
+                <td data-th="<?= $escaper->escapeHtml(__('URL')) ?>" class="col url"><?= /* @noEscape */ $data["url"] ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+<?php endif;?>

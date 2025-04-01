@@ -1,0 +1,24 @@
+{
+    "egits_wishlist_names": {
+        "column": {
+            "egits_wishlist_id": true,
+            "customer_id": true,
+            "name": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "egits_wishlist_items": {
+        "column": {
+            "egits_wishlist_item_id": true,
+            "wishlist_id": true,
+            "product_id": true,
+            "qty": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    }
+}

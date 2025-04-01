@@ -1,0 +1,149 @@
+<?php
+// Get the wishlist ID from the block's data
+$wishlistId = $block->getData('wishlist_id');
+
+// Call the getWishlist method to fetch product IDs
+$productIds = $block->getWishlist($wishlistId);
+$customerName = $block->getCustomerData()->getName();
+$customerEmail = $block->getCustomerData()->getEmail();
+
+?>
+
+<h1>Your Wishlist Products</h1>
+
+<?php if ($productIds): ?>
+    <div class="products-grid">
+        <?php foreach ($productIds as $productId): ?>
+            <?php
+            // Fetch product data by ID
+            $product = $block->getProductData($productId);
+
+            // Check if product data is returned
+            if ($product):
+                $productUrl = $product->getProductUrl(); // Get product URL
+                $productImage = $product->getImage(); // Get product image
+                $productPrice = $block->getLayout()->createBlock('Magento\Catalog\Block\Product\Price')->getPriceHtml($product);
+            ?>
+                <div class="product-item" data-product-id="<?php echo $productId; ?>" data-product-name="<?php echo $product->getName(); ?>" data-product-url="<?php echo $productUrl; ?>">
+                    <div class="product-image">
+                        <a href="<?php echo $productUrl; ?>">
+                            <img src="<?php echo $product->getData('image'); ?>" alt="<?php echo $product->getName(); ?>" />
+                        </a>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">
+                            <a href="<?php echo $productUrl; ?>"><?php echo $product->getName(); ?></a>
+                        </div>
+                        <div class="product-price">
+                            <?php echo $productPrice; ?>
+                        </div>
+                        <div class="product-sku">
+                            <strong>SKU: </strong><?php echo $product->getSku(); ?>
+                        </div>
+                        <div class="product-qty">
+                            <strong>Quantity: </strong><?php echo $block->getProductQty($productId); ?>
+                        </div>
+                        <div class="product-actions">
+                            <a href="<?php echo $productUrl; ?>" class="view-details">View Product</a>
+                        </div>
+                        <input type="hidden" id="customer-name" value="<?= $block->escapeHtml($customerName) ?>"/>
+                        <input type="hidden" class="customer-email" value="<?= $block->escapeHtml($customerEmail) ?>"/>
+                        <input type="hidden" class="product-id" value="<?= $block->escapeHtml($productId) ?>"/>
+
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </div>
+
+    <!-- Share Wishlist Button -->
+    <button type="submit" name="save_and_share" title="<?= $block->escapeHtmlAttr(__('Share Wish List')) ?>" class="action share">
+        <span><?= $block->escapeHtml(__('Share Wish List')) ?></span>
+    </button>
+
+    <!-- Add All to Cart Button -->
+    <button type="button" data-role="all-tocart" title="<?= $block->escapeHtmlAttr(__('Add All to Cart')) ?>" class="action tocart">
+        <span><?= $block->escapeHtml(__('Add All to Cart')) ?></span>
+    </button>
+
+    <!-- Update Wishlist Button -->
+
+
+<?php else: ?>
+    <p>Your wishlist is empty or no product IDs found.</p>
+<?php endif; ?>
+
+<!-- Include jQuery if it's not included already in Magento -->
+<script type="text/javascript">
+    require(['jquery'], function($) {
+        $(document).ready(function() {
+            // Handle the Share Wishlist button click
+            $('.action.share').on('click', function() {
+                var products = [];
+                
+                // Loop through all the products and gather product names and URLs
+                $('.product-item').each(function() {
+                    var productName = $(this).data('product-name');
+                    var productUrl = $(this).data('product-url');
+                    products.push({ name: productName, url: productUrl });
+                });
+                var customerName = $('#customer-name').val();
+                var customerEmail = $('.customer-email').val();
+
+                // For demonstration purposes, we log the products to the console
+                // You can modify this to send the data to a server or handle it as needed
+                console.log('Wishlist Products:', products);
+                console.log('Customer Name:', customerName);
+                console.log('Customer Email:', customerEmail);
+                $.ajax({
+                        url: '/wishlistgroups/index/share',
+                        type: 'POST',
+                        data: {
+                            itemData: products,
+                            customerName: customerName,
+                            customerEmail: customerEmail,
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            // var baseUrl = response.base_url;
+                            // if (response.success) {
+                            //     window.location.replace(baseUrl);
+
+                            // } else {
+                            //     window.location.replace(baseUrl);
+                            // }
+                            console.log(response);
+                        },
+                        error: function(xhr, status, error) {}
+                    });
+            });
+            $('.action.tocart').on('click', function() {
+    var products = [];
+    
+    // Loop through all the products and gather product IDs
+    $('.product-item').each(function() {
+        var productId = $(this).data('product-id'); // Define productId here
+        products.push({ id: productId });
+    });
+    console.log(products); // Log all products in the array
+
+    // For demonstration purposes, you can send the data to the server or handle it as needed
+    $.ajax({
+        url: '/wishlistgroups/index/tocart',
+        type: 'POST',
+        data: {
+            itemData: products,
+        },
+        dataType: 'json',
+        success: function(response) {
+            console.log(response.message);
+        },
+        error: function(xhr, status, error) {
+            console.log('Error:', error);
+        }
+    });
+});
+
+        });
+    });
+</script>

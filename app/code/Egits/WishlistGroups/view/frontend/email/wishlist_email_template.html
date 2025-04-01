@@ -1,0 +1,15 @@
+<!--@vars {
+"var customerName":"Customer Name",
+"var customerEmail":"Customer Email",
+
+} @-->
+<!--@subject {{trans "New Wishlist added - %customerName - " customerName=$customerName }} @-->
+{{template config_path="design/email/header_template"}}
+<p class="greeting">{{trans "Hi,"}}</p>
+<p>{{trans "New wishlist added by %customerName" customerName=$customerName }}</p>
+<p> Customer Name: {{var customerName}}</p>
+<p> Customer Email: {{var customerEmail}}</p>
+
+{{var wishlistGrid|raw}}
+
+{{template config_path="design/email/footer_template"}}

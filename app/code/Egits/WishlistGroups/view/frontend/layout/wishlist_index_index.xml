@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<layout xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/Xml/etc/layout.xsd">
+
+    <referenceBlock name="customer.wishlist.items" template="Egits_WishlistGroups::item/list.phtml">
+        <!-- Override the template for the block -->
+        <arguments>
+            <argument name="view_model" xsi:type="object">Egits\WishlistGroups\ViewModel\WishlistProductData</argument>
+        </arguments>
+    </referenceBlock>
+    <referenceContainer name="customer.wishlist.buttons" remove="true"/>
+</layout>

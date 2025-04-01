@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<layout xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/Xml/etc/layout.xsd">
+    
+    <!-- Override the existing product info add-to block -->
+    <referenceBlock name="product.info.addto">
+        <!-- Override with your custom block -->
+        <block class="Magento\Wishlist\Block\Catalog\Product\View\AddTo\Wishlist"
+               name="view.addto.wishlist"
+               template="Egits_WishlistGroups::catalog/product/view/addto/wishlist.phtml" />
+    </referenceBlock>
+
+</layout>

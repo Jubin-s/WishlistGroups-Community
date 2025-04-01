@@ -1,0 +1,28 @@
+<?php
+/** @var \Magento\Wishlist\Block\Customer\Wishlist\Items $block */
+$viewModel = $block->getViewModel();
+$wishListGroups = $viewModel->getWishlistGroups(); // Fetch the wishlist groups (names and IDs)
+
+// Check if getWishlistGroups returns data
+if ($wishListGroups && is_array($wishListGroups)) :
+?>
+    <div class="wishlist-header">
+        <h2><?= __('My Wishlists') ?></h2>
+        <ul class="wishlist-links">
+            <?php foreach ($wishListGroups as $wishlist) : ?>
+                <!-- Display the wishlist name as a link, with the wishlist ID as the URL parameter -->
+                <li>
+                    <a href="<?= $block->getUrl('wishlistgroups/wishlist/view', ['wishlist_id' => $wishlist['id']]) ?>" class="wishlist-link">
+                        <?= $block->escapeHtml($wishlist['name']) ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php
+else :
+?>
+    <p><?= __('No wishlists found.') ?></p>
+<?php endif; ?>
+
+<!-- The products-grid section is not needed since we're only displaying wishlist names with links -->
