@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<layout xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/layout_generic.xsd">
+    
+    <referenceBlock name="category.product.addto">
+        <block class="Magento\Wishlist\Block\Catalog\Product\ProductList\Item\AddTo\Wishlist"
+               name="category.product.addto.wishlist"
+               template="Egits_WishlistGroups::catalog/product/list/addto/wishlist.phtml" />
+    </referenceBlock>
+
+</layout>

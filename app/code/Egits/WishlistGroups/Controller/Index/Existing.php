@@ -9,12 +9,14 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Controller\ResultInterface;
 use Egits\WishlistGroups\Model\WishlistFactory;
-use Egits\WishlistGroups\Model\WishlistItem as ResourWishlistFactory;
+use Egits\WishlistGroups\Model\ResourceModel\WishlistItem as WishlistItemResource;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\App\RequestInterface;
 use Psr\Log\LoggerInterface;
 use Egits\WishlistGroups\Model\ResourceModel\WishlistItem\CollectionFactory;
+use Magento\Framework\Message\ManagerInterface;
+use Egits\WishlistGroups\Model\WishlistItemFactory; // Import the factory
 
 /**
  * Class Existing
@@ -47,13 +49,21 @@ class Existing implements ActionInterface
      */
     protected $logger;
     /**
-     * @var ResourWishlistFactory
+     * @var WishlistItemResource
      */
-    protected $resourceFactory;
-     /**
+    protected $wishlistItemResource;
+    /**
      * @var CollectionFactory
      */
     protected $collectionFactory;
+    /**
+     * @var ManagerInterface 
+     */
+    protected $messageManager;
+    /**
+     * @var WishlistItemFactory
+     */
+    protected $wishlistItemFactory; // Inject the factory
 
 
     public function __construct(
@@ -63,8 +73,10 @@ class Existing implements ActionInterface
         ProductRepository $productRepository,
         RequestInterface $request,
         LoggerInterface $logger,
-        ResourWishlistFactory $resourceFactory,
-        CollectionFactory $collectionFactory
+        WishlistItemResource $wishlistItemResource,
+        CollectionFactory $collectionFactory,
+        ManagerInterface $messageManager,
+        WishlistItemFactory $wishlistItemFactory // Inject the model factory here
     )
     {
         $this->jsonFactory = $jsonFactory;
@@ -73,9 +85,10 @@ class Existing implements ActionInterface
         $this->productRepository = $productRepository;
         $this->request = $request;
         $this->logger = $logger;
-        $this->resourceFactory = $resourceFactory;
+        $this->wishlistItemResource = $wishlistItemResource;
         $this->collectionFactory = $collectionFactory;
-
+        $this->messageManager = $messageManager;
+        $this->wishlistItemFactory = $wishlistItemFactory; // Assign the factory
     }
 
     /**
@@ -95,11 +108,8 @@ class Existing implements ActionInterface
         try {
             $customerId = $this->customerSession->getCustomerId();
 
-            // Fetch request parameters
             $wishlistId = $this->request->getParam('wishlist_id');
-            $productId = $this->request->getParam('product_id'); // Ensure this is product_id
-
-            // Log incoming data for debugging
+            $productId = $this->request->getParam('product_id');
             $this->logger->info("Received Data: Wishlist ID - " . $wishlistId . ", Product ID - " . $productId);
 
             if (!$wishlistId) {
@@ -115,49 +125,42 @@ class Existing implements ActionInterface
                 throw new LocalizedException(__('Invalid product.'));
             }
 
-            // Load the wishlist by ID
             $wishlist = $this->wishlistFactory->create()->load($wishlistId);
             if (!$wishlist->getId() || $wishlist->getCustomerId() != $customerId) {
                 throw new LocalizedException(__('Invalid wishlist.'));
             }
-            // Fetch the collection of wishlist items
-// Fetch the collection of wishlist items based on wishlist_id and product_id
-$isAlreadyPresent = $this->collectionFactory->create()
-    ->addFieldToFilter('wishlist_id', $wishlistId)
-    ->addFieldToFilter('product_id', $productId);
 
-$this->logger->info("Checking Wishlist ID: " . $wishlistId . " with Product ID: " . $productId);
-$this->logger->info("Query for existing item: " . $isAlreadyPresent->getSelect()->__toString()); // Log SQL query for debugging
+            $isAlreadyPresent = $this->collectionFactory->create()
+                ->addFieldToFilter('wishlist_id', $wishlistId)
+                ->addFieldToFilter('product_id', $productId);
 
-// Log the collection data
-$this->logger->info("Wishlist items: " . print_r($isAlreadyPresent->getData(), true));
+            $existingItem = $isAlreadyPresent->getFirstItem();
+            $existingItemId = $existingItem->getWishlistId();
 
-$existingItem = $isAlreadyPresent->getFirstItem(); // Retrieve the first matching item
-$existingItemId = $existingItem->getWishlistId();
-// Check if the item exists in the collection
-if ($existingItemId == $wishlistId) {
-    $existingQty = $existingItem->getQty();  // Access the qty field from the item
-    $this->logger->info("Current Quantity: " . $existingQty);
+            // If item already exists, update the quantity
+            if ($existingItemId == $wishlistId) {
+                $existingQty = $existingItem->getQty();
+                $this->logger->info("Current Quantity: " . $existingQty);
+                $existingItem->setQty($existingQty + 1);
+                $this->wishlistItemResource->save($existingItem);  // Save using resource model
+                $this->logger->info("Updated Quantity: " . $existingItem->getQty());
+            } else {
+                // If item is not present, create a new item using the factory
+                $newItem = $this->wishlistItemFactory->create(); // Use the factory to create the model
+                $newItem->setWishlistId($wishlistId)
+                        ->setProductId($productId)
+                        ->setQty(1);
+                $this->wishlistItemResource->save($newItem);  // Save the new item using resource model
+                $this->logger->info("New item added with qty 1.");
+            }
 
-    // Increase the quantity by 1
-    $existingItem->setQty($existingQty + 1);
-    $existingItem->save(); // Save the updated item
-    $this->logger->info("Updated Quantity: " . $existingItem->getQty());
-} else {
-    // If no matching item found, add a new item with qty = 1
-    $this->resourceFactory->setWishlistId($wishlistId)
-        ->setProductId($productId)
-        ->setQty(1)  // Set initial quantity
-        ->save();
-    $this->logger->info("New item added with qty 1.");
-}
-
-return $result->setData([
-    'success' => true,
-    'message' => __('Product added to the selected wishlist successfully.')
-]);
-
+            $this->messageManager->addSuccessMessage(__('Product added to the selected wishlist successfully.'));
+            return $result->setData([
+                'success' => true,
+                'message' => __('Product added to the selected wishlist successfully.')
+            ]);
         } catch (\Exception $e) {
+            $this->messageManager->addErrorMessage(__('Unable to add product to the selected wishlist'));
             $this->logger->error("Wishlist Error: " . $e->getMessage());
             return $result->setData([
                 'success' => false,

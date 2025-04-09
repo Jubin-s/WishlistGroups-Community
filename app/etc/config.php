@@ -353,7 +353,11 @@ return [
         'Magento_ThemeGraphQl' => 1,
         'Magento_CmsSampleData' => 1,
         'Magento_Translation' => 1,
+<<<<<<< HEAD
         'Magento_AdminAdobeImsTwoFactorAuth' => 1,
+=======
+        'Magento_AdminAdobeImsTwoFactorAuth' => 0,
+>>>>>>> 10522dc... #Implemented save, delete and refactored code
         'Magento_GoogleOptimizer' => 1,
         'Magento_Ups' => 1,
         'Magento_SalesSampleData' => 1,

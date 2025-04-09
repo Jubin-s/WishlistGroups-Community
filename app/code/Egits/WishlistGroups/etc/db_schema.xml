@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup:Schema:db_schema.xsd">
-    
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup:Schema:db_schema.xsd">
+
     <table name="egits_wishlist_names" resource="default" engine="innodb" comment="Wishlist Names Table">
-        
+
         <!-- Define the primary key column -->
-        <column xsi:type="int" name="egits_wishlist_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Wishlist ID"/>
+        <column xsi:type="int" name="egits_wishlist_id" padding="10" unsigned="true" nullable="false" identity="true"
+                comment="Wishlist ID"/>
         <column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="false" comment="Customer ID"/>
-        
+
         <!-- Define the name column -->
         <column xsi:type="varchar" name="name" length="255" nullable="false" comment="Wishlist Name"/>
-        
+
         <!-- Define the created_at column -->
-        <column xsi:type="datetime" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="datetime" name="created_at" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created At"/>
 
         <!-- Define the primary key constraint -->
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="egits_wishlist_id"/>
         </constraint>
-        
+
     </table>
     <table name="egits_wishlist_items" resource="default" engine="innodb" comment="Wishlist Items Table">
-        
+
         <!-- Define the primary key column -->
-        <column xsi:type="int" name="egits_wishlist_item_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Wishlist ID"/>
+        <column xsi:type="int" name="egits_wishlist_item_id" padding="10" unsigned="true" nullable="false"
+                identity="true" comment="Wishlist ID"/>
         <column xsi:type="int" name="wishlist_id" padding="10" unsigned="true" nullable="false" comment="Wishlist ID"/>
         <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" comment="Product ID"/>
         <column xsi:type="int" name="qty" padding="10" unsigned="true" nullable="false" comment="Product Quantity"/>
@@ -31,7 +35,7 @@
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="egits_wishlist_item_id"/>
         </constraint>
-        
+
     </table>
 
 </schema>

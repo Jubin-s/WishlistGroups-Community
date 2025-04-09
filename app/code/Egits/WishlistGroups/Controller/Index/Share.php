@@ -7,6 +7,7 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Message\ManagerInterface;
 use Psr\Log\LoggerInterface;
 use Egits\WishlistGroups\Model\SendWishlistMail;
 use Magento\Framework\App\Action\Context;
@@ -41,7 +42,7 @@ class Share implements ActionInterface
     protected $sendWishlistMail;
 
     /**
-     * @var \Magento\Framework\Message\ManagerInterface
+     * @var ManagerInterface
      */
     protected $messageManager;
 
@@ -105,7 +106,7 @@ class Share implements ActionInterface
         $formData = $this->request->getParam('itemData');
         $customerName = $this->request->getParam('customerName');
         $customerEmail = $this->request->getParam('customerEmail');
-        
+
         $this->logger->error('\Customer Name: ' . $customerName);
         $this->logger->error('\Customer Email: ' . $customerEmail);
         // Prepare additional data
@@ -115,14 +116,11 @@ class Share implements ActionInterface
         ];
 
 
-
         try {
             // Send survey email (if applicable)
             $this->logger->info('formdata ' . json_encode($formData));
 
-            $this->sendWishlistMail->execute($formData,$additionalData);
-            // $customer = $this->customerRepository->get($customerEmail);
-
+            $this->sendWishlistMail->execute($formData, $additionalData);
 
             // Add success message
             $this->messageManager->addSuccessMessage(__('Wishlist shared successfully'));

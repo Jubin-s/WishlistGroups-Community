@@ -1,4 +1,5 @@
 <?php
+
 namespace Egits\WishlistGroups\Api\Data;
 /**
  * Interface AttachmentInterface

@@ -2,19 +2,45 @@
 
 namespace Egits\WishlistGroups\Block;
 
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
+use Magento\Customer\Model\Customer;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Element\Template;
 use Egits\WishlistGroups\Model\ResourceModel\WishlistItem\CollectionFactory;
 use Magento\Customer\Model\Session;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Framework\View\Element\Template\Context;
 use Egits\WishlistGroups\Model\WishlistItem;
+use Magento\Store\Model\StoreManagerInterface;
 
+/**
+ * Class Index
+ * @package Egits\WishlistGroups\Block
+ */
 class Index extends Template
 {
+    /**
+     * @var CollectionFactory
+     */
     protected $wishlistItemCollectionFactory;
+    /**
+     * @var Session
+     */
     protected $customerSession;
-    protected $_productRepository; // Declare ProductRepository
+    /**
+     * @var ProductRepository
+     */
+    protected $_productRepository;
+    /**
+     * @var WishlistItem
+     */
     protected $wishlistItem;
+    /**
+     * @var ProductRepositoryInterface
+     */
+    private $productrepository;
 
     /**
      * Constructor
@@ -24,18 +50,26 @@ class Index extends Template
      * @param Session $customerSession
      * @param ProductRepository $productRepository
      * @param WishlistItem $wishlistItem
+     * @param ProductRepositoryInterface $productrepository
+     * @param StoreManagerInterface $storemanager
      */
     public function __construct(
         Context $context,
         CollectionFactory $wishlistItemCollectionFactory,
         Session $customerSession,
-        ProductRepository $productRepository, // Inject ProductRepository
-        WishlistItem $wishlistItem
-    ) {
+        ProductRepository $productRepository,
+        WishlistItem $wishlistItem,
+        ProductRepositoryInterface $productrepository,
+        StoreManagerInterface $storemanager
+
+    )
+    {
         $this->wishlistItemCollectionFactory = $wishlistItemCollectionFactory;
         $this->customerSession = $customerSession;
-        $this->_productRepository = $productRepository; // Assign ProductRepository to property
-        $this->wishlistItem = $wishlistItem; // Assign ProductRepository to property
+        $this->_productRepository = $productRepository;
+        $this->wishlistItem = $wishlistItem;
+        $this->productrepository = $productrepository;
+        $this->_storeManager = $storemanager;
         parent::__construct($context);
     }
 
@@ -47,53 +81,71 @@ class Index extends Template
      */
     public function getWishlist($wishlistId)
     {
-        $customerId = $this->customerSession->getCustomer()->getId();
-        
-        // Get the wishlist item collection for the customer, filtered by wishlist_id
         $wishlistCollection = $this->wishlistItemCollectionFactory->create()
             ->addFieldToFilter('wishlist_id', $wishlistId);
 
-        // Initialize an empty array to hold product IDs
         $productIds = [];
 
         // If the collection contains items, loop through and fetch the product IDs
         if ($wishlistCollection->getSize() > 0) {
             foreach ($wishlistCollection as $item) {
-                $productIds[] = $item->getProductId();  // Add product ID to the array
+                $productIds[] = $item->getProductId();
             }
-            return $productIds;  // Return the array of product IDs
+            return $productIds;
         }
 
-        return null;  // No wishlist items found
+        return null;
     }
 
     /**
      * Get product data by product ID
      *
      * @param int $productId
-     * @return \Magento\Catalog\Model\Product|null
+     * @return Product|null
      */
     public function getProductData($productId)
     {
         try {
-            // Fetch the product using the product repository by ID
             $product = $this->_productRepository->getById($productId);
-            return $product; // Return the product object
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            // Handle case where the product is not found (e.g., invalid product ID)
+            return $product;
+        } catch (NoSuchEntityException $e) {
             return null;
         }
     }
+
+    /**
+     * @return Customer
+     */
     public function getCustomerData()
     {
         if ($this->customerSession->isLoggedIn()) {
-            // Get the customer model from the session
             return $this->customerSession->getCustomer();
-    }}
-    public function getProductQty($productId)
+        }
+    }
+
+    /**
+     * @param $wishlistId
+     * @return mixed
+     */
+    public function getProductQty($wishlistId,$productId)
     {
         $wishlistCollection = $this->wishlistItemCollectionFactory->create()
-            ->addFieldToFilter('product_id', $productId)->getFirstItem();
-            return $wishlistCollection->getQty();}
+            ->addFieldToFilter('wishlist_id', $wishlistId)
+            ->addFieldToFilter('product_id', $productId)
+            ->getFirstItem();
+        return $wishlistCollection->getQty();
+    }
+
+    /**
+     * @param $productId
+     * @return string
+     * @throws NoSuchEntityException
+     */
+    Public function getProductImageUsingCode($productId)
+    {
+        $store = $this->_storeManager->getStore();
+        $product = $this->productrepository->getById($productId);
+        return $store->getBaseUrl(UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' . $product->getImage();
+    }
 
 }

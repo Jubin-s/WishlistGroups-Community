@@ -64,15 +64,15 @@ class WishlistProductData implements ArgumentInterface
     {
         // Get the customer ID
         $customerId = $this->getCustomerDetails()->getId();
-        
+
         // Get the wishlist collection for the current customer
         $wishlistCollection = $this->wishlistFactory->create()->addFieldToFilter('customer_id', $customerId);
-        
+
         // Check if there are any items in the collection
         if ($wishlistCollection->getSize() > 0) {
             // Create an array to store the wishlist data (ID and name)
             $wishlistGroups = [];
-    
+
             foreach ($wishlistCollection as $wishlistItem) {
                 // Add both the ID and name of the wishlist
                 $wishlistGroups[] = [
@@ -80,17 +80,14 @@ class WishlistProductData implements ArgumentInterface
                     'name' => $wishlistItem->getName()
                 ];
             }
-    
+
             // Return the wishlist groups as an array
             return $wishlistGroups;
         }
-    
+
         // Return null if no wishlists found
         return null;
     }
-    
 
-
-   
 
 }

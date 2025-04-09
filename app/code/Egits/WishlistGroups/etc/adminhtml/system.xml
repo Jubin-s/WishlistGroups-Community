@@ -19,7 +19,7 @@
                     <label>Wishlist Limit</label>
                     <validate>validate-number</validate>
                 </field>
-                <field id="sender" translate="label" type="select" sortOrder="20" showInDefault="1" 
+                <field id="sender" translate="label" type="select" sortOrder="20" showInDefault="1"
                        showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Admin Email Recipient</label>
                     <source_model>Magento\Config\Model\Config\Source\Email\Identity</source_model>

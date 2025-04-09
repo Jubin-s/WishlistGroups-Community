@@ -16,7 +16,10 @@ use Egits\WishlistGroups\Model\ResourceModel\Wishlist\CollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Psr\Log\LoggerInterface;
 use Egits\WishlistGroups\Model\Wishlist as EgitsWishlist;
-use Egits\WishlistGroups\Model\WishlistItem;
+use Egits\WishlistGroups\Model\WishlistItem as EgitsWishlistItem;
+use Egits\WishlistGroups\Model\ResourceModel\Wishlist as WishlistResourceModel;
+use Egits\WishlistGroups\Model\ResourceModel\WishlistItem as WishlistItemResourceModel;
+use Magento\Framework\Message\ManagerInterface;
 
 /**
  * Class Save
@@ -74,6 +77,21 @@ class Save implements ActionInterface
      */
     protected $egitsWishlistItem;
 
+    /**
+     * @var WishlistResourceModel
+     */
+    protected $wishlistResourceModel;
+
+    /**
+     * @var WishlistItemResourceModel
+     */
+    protected $wishlistItemResourceModel;
+
+    /**
+     *  @var ManagerInterface 
+     */
+    protected $messageManager;
+
     public function __construct(
         JsonFactory $jsonFactory,
         Session $customerSession,
@@ -84,8 +102,12 @@ class Save implements ActionInterface
         CollectionFactory $collectionFactory,
         ScopeConfigInterface $scopeConfig,
         EgitsWishlist $egitsWishlist,
-        WishlistItem $egitsWishlistItem
-    ) {
+        EgitsWishlistItem $egitsWishlistItem,
+        WishlistResourceModel $wishlistResourceModel,  // Inject the Wishlist Resource Model
+        WishlistItemResourceModel $wishlistItemResourceModel, // Inject the WishlistItem Resource Model
+        ManagerInterface $messageManager
+    )
+    {
         $this->jsonFactory = $jsonFactory;
         $this->customerSession = $customerSession;
         $this->wishlistFactory = $wishlistFactory;
@@ -96,6 +118,9 @@ class Save implements ActionInterface
         $this->scopeConfig = $scopeConfig;
         $this->egitsWishlist = $egitsWishlist;
         $this->egitsWishlistItem = $egitsWishlistItem;
+        $this->wishlistResourceModel = $wishlistResourceModel;  // Assign the Wishlist Resource Model
+        $this->wishlistItemResourceModel = $wishlistItemResourceModel; // Assign the WishlistItem Resource Model
+        $this->messageManager = $messageManager;
     }
 
     /**
@@ -139,36 +164,41 @@ class Save implements ActionInterface
             );
 
             if ($wishlistCount < $wishlistCountInDb) {
+                $this->messageManager->addErrorMessage(__("The number of wishlist that can be created is limited to  " . $wishlistCount . " wishlists. If you want to create a new one, please delete an existing one and try again."));
                 return $result->setData([
                     'success' => false,
                     'message' => __("You already created " . $wishlistCountInDb . " wishlists. If you want to create a new one, please delete an existing one and try again.")
                 ]);
             }
-            // Step 1: Create a new wishlist in the custom table using EgitsWishlist
-            $this->egitsWishlist->setCustomerId($customerId)
-                ->setName($wishlistName)
-                ->save();
-                $wishlistId = $this->egitsWishlist->getId();
-                $this->logger->info("Wishlist id: " . $wishlistId);
 
-            // Step 2: Add the product to the wishlist item table
-            // $defaultWishlist = $this->wishlistFactory->create()->loadByCustomerId($customerId, true);
+            // Create the Wishlist and save it using the resource model
+            $this->egitsWishlist->setCustomerId($customerId)
+                ->setName($wishlistName);
+            $this->wishlistResourceModel->save($this->egitsWishlist);  // Save using the resource model
+
+            $wishlistId = $this->egitsWishlist->getId();
+            $this->logger->info("Wishlist id: " . $wishlistId);
+            
             $product = $this->productRepository->getById($productId);
 
             if (!$product->getId()) {
                 throw new LocalizedException(__('Invalid product.'));
             }
-            $this->egitsWishlistItem->setWishlistId($wishlistId)->setProductId($productId)
-            ->setQty(1)->save();
-            // $defaultWishlist->addNewItem($product);
-            // $defaultWishlist->save();
 
+            // Create the Wishlist Item and save it using the resource model
+            $this->egitsWishlistItem->setWishlistId($wishlistId)
+                ->setProductId($productId)
+                ->setQty(1);
+            $this->wishlistItemResourceModel->save($this->egitsWishlistItem);  // Save using the resource model
+
+            $this->messageManager->addSuccessMessage(__('Wishlist Created & Product Added Successfully.'));
             return $result->setData([
                 'success' => true,
                 'message' => __('Wishlist Created & Product Added Successfully.')
             ]);
 
         } catch (\Exception $e) {
+            $this->messageManager->addErrorMessage(__('Unable to create wishlist'));
             $this->logger->error("Wishlist Error: " . $e->getMessage());
             return $result->setData([
                 'success' => false,

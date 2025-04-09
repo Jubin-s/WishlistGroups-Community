@@ -23,12 +23,10 @@ class Wishlist extends Template
      * @param array $formData
      */
     public function setEmailFormData($formData)
-    {    
-        if(empty($formData)){
+    {
+        if (empty($formData)) {
             $this->formData = [];
-        }
-        else
-        {
+        } else {
             $this->formData = $formData;
         };
     }
@@ -40,6 +38,6 @@ class Wishlist extends Template
      */
     public function getEmailFormData()
     {
-        return  $this->formData;
+        return $this->formData;
     }
 }

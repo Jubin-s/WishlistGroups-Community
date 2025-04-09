@@ -1,7 +1,8 @@
 <?php
+
 namespace Egits\WishlistGroups\Controller\Index;
 
-use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\ActionInterface;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\Controller\ResultInterface;
@@ -14,17 +15,20 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Quote\Model\QuoteFactory;
+use Egits\WishlistGroups\Model\ResourceModel\WishlistItem\CollectionFactory as WishlistItemCollectionFactory;
+use Magento\Framework\App\RequestInterface;
 
 /**
  * Class Tocart
  */
-class Tocart extends Action implements HttpPostActionInterface
+class Tocart implements ActionInterface, HttpPostActionInterface
 {
     /** @var SessionFactory */
     private $checkoutSession;
 
-        /** @var Cart */
-        private $cart;
+    /** @var Cart */
+    private $cart;
 
     /** @var CartRepositoryInterface */
     private $cartRepository;
@@ -44,6 +48,19 @@ class Tocart extends Action implements HttpPostActionInterface
     /** @var ManagerInterface */
     protected $messageManager;
 
+    /** @var QuoteFactory */
+    private $quoteFactory;
+
+    /**
+     * @var WishlistItemCollectionFactory
+     */
+    protected $wishlistItemCollectionFactory;
+
+     /**
+     * @var RequestInterface
+     */
+    protected $request;
+
     /**
      * Tocart constructor.
      * @param Context $context
@@ -55,6 +72,9 @@ class Tocart extends Action implements HttpPostActionInterface
      * @param JsonFactory $jsonFactory
      * @param LoggerInterface $logger
      * @param ManagerInterface $messageManager
+     * @param QuoteFactory $quoteFactory
+     * @param WishlistItemCollectionFactory $wishlistItemCollectionFactory
+     * @param RequestInterface $request
      */
     public function __construct(
         Context $context,
@@ -65,17 +85,23 @@ class Tocart extends Action implements HttpPostActionInterface
         ProductRepositoryInterface $productRepository,
         JsonFactory $jsonFactory,
         LoggerInterface $logger,
-        ManagerInterface $messageManager
-    ) {
+        ManagerInterface $messageManager,
+        QuoteFactory $quoteFactory,
+        WishlistItemCollectionFactory $wishlistItemCollectionFactory,
+        RequestInterface $request
+    )
+    {
         $this->checkoutSession = $checkoutSession;
-        $this->quote = $cart;
+        $this->cart = $cart;
         $this->cartRepository = $cartRepository;
         $this->productRepository = $productRepository;
         $this->json = $json;
         $this->jsonFactory = $jsonFactory;
         $this->logger = $logger;
         $this->messageManager = $messageManager;
-        parent::__construct($context);
+        $this->quoteFactory = $quoteFactory;
+        $this->wishlistItemCollectionFactory = $wishlistItemCollectionFactory;
+        $this->request = $request;
     }
 
     /**
@@ -84,40 +110,56 @@ class Tocart extends Action implements HttpPostActionInterface
      */
     public function execute()
     {
+        $productsAdded = false; 
+
         try {
             $result = $this->jsonFactory->create();
-
-            // Retrieve the product IDs from the request
-            $formData = $this->getRequest()->getParam('itemData'); // Array of product data
+            $formData = $this->request->getParam('itemData'); // Array of product data
             $this->logger->info('Item Data: ' . json_encode($formData));
-            
-            // Initialize the quote and session
             $session = $this->checkoutSession->create();
-            // $quote = $session->getQuote();
-            $quote = $this->quote;
-            // Loop through each product in itemData and add it to the cart
+            $quote = $session->getQuote();
+
             foreach ($formData as $item) {
-                $productId = $item['id']; // Assuming 'id' is the product ID
-                $qty = isset($item['qty']) ? $item['qty'] : 1; // Default to quantity of 1 if not set
-                
-                // Load the product by ID
+                $productId = $item['id']; 
+                $qty = isset($item['qty']) ? $item['qty'] : 1; 
+
                 $product = $this->productRepository->getById($productId);
                 if ($product) {
+                    // Check if the product is a simple product
+                    if ($product->getTypeId() !== 'simple') {
+                        // If the product is not a simple product, show an error message
+                        $this->messageManager->addErrorMessage(__('Product "%1" is not a simple product and cannot be added to the cart.', $product->getName()));
+                        continue; // Skip this product and move to the next one
+                    }
+
                     // Add the product to the quote (cart)
                     $quote->addProduct($product, $qty);
+                    $productsAdded = true; 
+
+                    // Remove the product from the wishlist after adding to the cart
+                    $wishlistItemCollection = $this->wishlistItemCollectionFactory->create()
+                        ->addFieldToFilter('product_id', $productId);
+                    foreach ($wishlistItemCollection as $wishlistItem) {
+                        // Delete the wishlist item
+                        $wishlistItem->delete();
+                    }
                 }
             }
 
-            // Save the updated quote to the cart repository
-            $this->cartRepository->save($quote);
+            // Save the updated quote to the cart repository if any product was added
+            if ($productsAdded) {
+                $this->cartRepository->save($quote); // Pass the correct Quote object
 
-            // Replace the quote in the session
-            $session->replaceQuote($quote)->unsLastRealOrderId();
-            $this->messageManager->addSuccessMessage(__('Products added to cart'));
+                // Replace the quote in the session
+                $session->replaceQuote($quote)->unsLastRealOrderId();
+                $this->messageManager->addSuccessMessage(__('Products added to cart'));
+            }
+
             // Return success response
             return $result->setData([
-                'success' => true,
-                'message' => __('Products successfully added to your cart.')
+                'success' => $productsAdded,
+                'product_added' => $productsAdded,
+                'message' => $productsAdded ? __('Products successfully added to your cart.') : __('No products were added to the cart.')
             ]);
         } catch (\Exception $e) {
             // Log and handle any errors

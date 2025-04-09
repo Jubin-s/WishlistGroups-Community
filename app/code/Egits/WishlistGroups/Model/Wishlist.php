@@ -1,4 +1,5 @@
 <?php
+
 namespace Egits\WishlistGroups\Model;
 
 use Egits\WishlistGroups\Api\Data\WishlistInterface;
@@ -79,10 +80,12 @@ class Wishlist extends AbstractModel implements WishlistInterface, IdentityInter
     {
         return $this->setData(self::NAME, $name);
     }
+
     public function getCustomerId()
     {
         return $this->getData(self::CUSTOMER_ID);
     }
+
     public function setCustomerId($customerId)
     {
         return $this->setData(self::CUSTOMER_ID, $customerId);

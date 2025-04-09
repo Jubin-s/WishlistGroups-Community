@@ -1,0 +1,262 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var Magento\Wishlist\Block\Catalog\Product\ProductList\Item\AddTo\Wishlist $block */
+?>
+<?php if ($block->getWishlistHelper()->isAllow()) : ?>
+    <a href="#"
+       id="wishlist-button" 
+       class="action towishlist"
+       title="<?= $block->escapeHtmlAttr(__('Add to Wish List')) ?>"
+       aria-label="<?= $block->escapeHtmlAttr(__('Add to Wish List')) ?>"
+       data-post='<?= /* @noEscape */ $block->getAddToWishlistParams($block->getProduct()) ?>'
+       data-action="add-to-wishlist"
+       role="button">
+        <span><?= $block->escapeHtml(__('Add to Wish List')) ?></span>
+    </a>
+<?php endif; ?>
+<div id="wishlist-popup" class="wishlist-popup" style="display: none;">
+    <div class="popup-content">
+        <button id="create-new-wishlist-btn" class="action primary">
+            <span><?= __('Create New') ?></span>
+        </button>
+        <button id="add-existing-wishlist-btn" class="action secondary">
+            <span><?= __('Add to Existing') ?></span>
+        </button>
+        <div style="margin-bottom: 30px;"></div>
+
+        <!-- Create New Wishlist Form -->
+        <form id="new-wishlist-form" method="post" style="display: none;">
+            <fieldset class="fieldset">
+                <div class="field name">
+                    <label for="wishlist-name" class="label">
+                        <span><?= __('Wishlist Name') ?></span>
+                    </label>
+                    <div class="control">
+                        <input id="wishlist-name"
+                               class="input-text"
+                               type="text"
+                               name="wishlist_name"
+                               required>
+                    </div>
+                </div>
+                <div class="actions-toolbar">
+                    <div class="primary">
+                        <button class="action save primary" type="submit">
+                            <span><?= __('Save') ?></span>
+                        </button>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+
+        <!-- Existing Wishlist List -->
+        <div id="existing-wishlist-section" style="display: none;">
+            <label for="wishlist-select"><?= __('Select Wishlist') ?></label>
+            <select id="wishlist-select" class="input-select" style="margin-top: 10px;">
+                <!-- Wishlist options will be loaded dynamically -->
+            </select>
+
+            <button id="add-to-selected-wishlist" class="action primary" style="margin-top: 20px;">
+                <span><?= __('Add to Wishlist') ?></span>
+            </button>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+require([
+    'jquery',
+    'Magento_Ui/js/modal/modal',
+    'mage/url'
+], function ($, modal, urlBuilder) {
+
+    var popupElement = $('.wishlist-popup');
+    var clickedButton = null;
+    var productData = null;
+    var isProcessing = false; // Flag to prevent multiple AJAX requests
+
+    if (popupElement.length) {
+        var popup = popupElement.modal({
+            type: 'popup',
+            title: 'Wishlist Options',
+            modalClass: 'wishlist-popup-modal',
+            responsive: true,
+            innerScroll: true,
+            buttons: []
+        });
+
+        // Open Popup
+        $('body').off('click', '#wishlist-button').on('click', '#wishlist-button', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Reset popup content to its initial state
+            $('#new-wishlist-form').hide();
+            $('#existing-wishlist-section').hide();
+            $('#create-new-wishlist-btn').show();
+            $('#add-existing-wishlist-btn').show();
+
+            clickedButton = $(this);
+            productData = JSON.parse(clickedButton.attr('data-post') || '{}');
+            popupElement.modal('openModal');
+        });
+
+        // Create New Wishlist and Add Product
+        $('body').off('submit', '#new-wishlist-form').on('submit', '#new-wishlist-form', function (event) {
+            event.preventDefault();
+            var wishlistName = $('#wishlist-name').val().trim();
+
+            if (!wishlistName) {
+                alert('Please enter a wishlist name.');
+                return;
+            }
+
+            var productId = productData?.data?.product;
+            if (!productId) {
+                alert('Product data is missing.');
+                return;
+            }
+
+            var requestData = {
+                name: wishlistName,
+                product: productId
+            };
+
+            if (isProcessing) {
+                return; // Prevent further requests if one is in progress
+            }
+
+            isProcessing = true; // Set processing flag
+
+            $.ajax({
+                url: urlBuilder.build('wishlistgroups/index/save'),
+                type: 'POST',
+                dataType: 'json',
+                data: requestData,
+                showLoader: true,
+                success: function (response) {
+                    isProcessing = false; // Reset processing flag
+
+                    if (response.success) {
+                        popupElement.modal('closeModal');
+                        $('#wishlist-button').prop('disabled', true);  // Disable the button to prevent further submissions
+                        setTimeout(function() {
+                            $('#wishlist-button').prop('disabled', false);  // Re-enable after 3 seconds
+                        }, 3000);
+                        productData = null;  // Reset product data
+                        location.reload();
+                    } else {
+                    }
+                },
+                error: function (xhr) {
+                    isProcessing = false; // Reset processing flag
+                    console.error("AJAX Error:", xhr.responseText);
+                }
+            });
+        });
+
+        // Add to Existing Wishlist
+        $('body').off('click', '#add-existing-wishlist-btn').on('click', '#add-existing-wishlist-btn', function () {
+            $('#existing-wishlist-section').show();
+            $('#new-wishlist-form').hide();
+
+            if (isProcessing) {
+                return; // Prevent further requests if one is in progress
+            }
+
+            isProcessing = true; // Set processing flag
+
+            $.ajax({
+                url: urlBuilder.build('wishlistgroups/index/listwishlist'),
+                type: 'GET',
+                dataType: 'json',
+                showLoader: true,
+                success: function (response) {
+                    isProcessing = false; // Reset processing flag
+
+                    var select = $('#wishlist-select');
+                    select.empty();
+
+                    if (response.success && response.wishlists.length > 0) {
+                        $.each(response.wishlists, function (index, wishlist) {
+                            select.append('<option value="' + wishlist.id + '">' + wishlist.name + '</option>');
+                        });
+                    } else {
+                        select.append('<option value="">' + 'No Wishlists Available' + '</option>');
+                    }
+                },
+                error: function (xhr) {
+                    isProcessing = false; // Reset processing flag
+                    console.error("Error fetching wishlists:", xhr.responseText);
+                }
+            });
+        });
+
+        // Add to Selected Existing Wishlist
+        $('body').off('click', '#add-to-selected-wishlist').on('click', '#add-to-selected-wishlist', function () {
+            var wishlistId = $('#wishlist-select').val();
+
+            if (!wishlistId) {
+                alert('Please select a wishlist.');
+                return;
+            }
+
+            if (productData) {
+                var productId = productData?.data?.product;
+                if (!productId) {
+                    alert('Product data is missing.');
+                    return;
+                }
+
+                var requestData = {
+                    wishlist_id: wishlistId,
+                    product_id: productId
+                };
+
+                if (isProcessing) {
+                    return; // Prevent further requests if one is in progress
+                }
+
+                isProcessing = true; // Set processing flag
+
+                $.ajax({
+                    url: urlBuilder.build('wishlistgroups/index/existing'),
+                    type: 'POST',
+                    dataType: 'json',
+                    data: requestData,
+                    showLoader: true,
+                    success: function (response) {
+                        isProcessing = false; // Reset processing flag
+
+                        if (response.success) {
+                            popupElement.modal('closeModal');
+                            location.reload();
+                            productData = null;  // Reset product data after success
+                        } else {
+                        }
+                    },
+                    error: function (xhr) {
+                        isProcessing = false; // Reset processing flag
+                        console.error("Error:", xhr.responseText);
+                    }
+                });
+            }
+        });
+
+        // Show Create New Wishlist Form
+        $('#create-new-wishlist-btn').on('click', function () {
+            $('#new-wishlist-form').show();
+            $('#existing-wishlist-section').hide();
+        });
+
+        // Close Popup
+        $('body').on('click', '.wishlist-popup .cancel', function () {
+            popupElement.modal('closeModal');
+        });
+    } else {
+    }
+});
+</script>

@@ -23,11 +23,14 @@ $customerEmail = $block->getCustomerData()->getEmail();
                 $productUrl = $product->getProductUrl(); // Get product URL
                 $productImage = $product->getImage(); // Get product image
                 $productPrice = $block->getLayout()->createBlock('Magento\Catalog\Block\Product\Price')->getPriceHtml($product);
-            ?>
-                <div class="product-item" data-product-id="<?php echo $productId; ?>" data-product-name="<?php echo $product->getName(); ?>" data-product-url="<?php echo $productUrl; ?>">
+                ?>
+                <div class="product-item" data-product-id="<?php echo $productId; ?>"
+                     data-product-name="<?php echo $product->getName(); ?>"
+                     data-product-url="<?php echo $productUrl; ?>">
                     <div class="product-image">
                         <a href="<?php echo $productUrl; ?>">
-                            <img src="<?php echo $product->getData('image'); ?>" alt="<?php echo $product->getName(); ?>" />
+                            <img src="<?php echo $block->getProductImageUsingCode($productId); ?>"
+                                 alt="<?php echo $product->getName(); ?>"/>
                         </a>
                     </div>
                     <div class="product-info">
@@ -41,7 +44,7 @@ $customerEmail = $block->getCustomerData()->getEmail();
                             <strong>SKU: </strong><?php echo $product->getSku(); ?>
                         </div>
                         <div class="product-qty">
-                            <strong>Quantity: </strong><?php echo $block->getProductQty($productId); ?>
+                            <strong>Quantity: </strong><?php echo $block->getProductQty($wishlistId,$productId); ?>
                         </div>
                         <div class="product-actions">
                             <a href="<?php echo $productUrl; ?>" class="view-details">View Product</a>
@@ -54,96 +57,132 @@ $customerEmail = $block->getCustomerData()->getEmail();
                 </div>
             <?php endif; ?>
         <?php endforeach; ?>
+        <input type="hidden" class="wishlist-id" value="<?= $block->escapeHtml($wishlistId) ?>"/>
     </div>
 
     <!-- Share Wishlist Button -->
-    <button type="submit" name="save_and_share" title="<?= $block->escapeHtmlAttr(__('Share Wish List')) ?>" class="action share">
+    <button type="submit" name="save_and_share" title="<?= $block->escapeHtmlAttr(__('Share Wish List')) ?>"
+            class="action share">
         <span><?= $block->escapeHtml(__('Share Wish List')) ?></span>
     </button>
 
     <!-- Add All to Cart Button -->
-    <button type="button" data-role="all-tocart" title="<?= $block->escapeHtmlAttr(__('Add All to Cart')) ?>" class="action tocart">
+    <button type="button" data-role="all-tocart" title="<?= $block->escapeHtmlAttr(__('Add All to Cart')) ?>"
+            class="action tocart">
         <span><?= $block->escapeHtml(__('Add All to Cart')) ?></span>
     </button>
 
-    <!-- Update Wishlist Button -->
+    <!-- Delete Wishlist Items Button -->
+    <button type="button" data-role="all-delete" title="<?= $block->escapeHtmlAttr(__('Delete Wishlist Items')) ?>"
+            class="action deleteall">
+        <span><?= $block->escapeHtml(__('Delete Wishlist Items')) ?></span>
+    </button>
 
+    <!-- Delete Wishlist Button -->
+    <button type="button" data-role="all-deletewishlist" title="<?= $block->escapeHtmlAttr(__('Delete Wishlist ')) ?>"
+            class="action delete">
+        <span><?= $block->escapeHtml(__('Delete Wishlist')) ?></span>
+    </button>
 
 <?php else: ?>
     <p>Your wishlist is empty or no product IDs found.</p>
+    <input type="hidden" class="wishlist-id" value="<?= $block->escapeHtml($wishlistId) ?>"/>
+    <!-- Delete Wishlist Button -->
+    <button type="button" data-role="all-deletewishlist" title="<?= $block->escapeHtmlAttr(__('Delete Wishlist ')) ?>"
+            class="action delete">
+        <span><?= $block->escapeHtml(__('Delete Wishlist')) ?></span>
+    </button>
 <?php endif; ?>
 
 <!-- Include jQuery if it's not included already in Magento -->
 <script type="text/javascript">
-    require(['jquery'], function($) {
-        $(document).ready(function() {
+    require(['jquery'], function ($) {
+        $(document).ready(function () {
             // Handle the Share Wishlist button click
-            $('.action.share').on('click', function() {
+            $('.action.share').on('click', function () {
                 var products = [];
-                
+
                 // Loop through all the products and gather product names and URLs
-                $('.product-item').each(function() {
+                $('.product-item').each(function () {
                     var productName = $(this).data('product-name');
                     var productUrl = $(this).data('product-url');
-                    products.push({ name: productName, url: productUrl });
+                    products.push({name: productName, url: productUrl});
                 });
                 var customerName = $('#customer-name').val();
                 var customerEmail = $('.customer-email').val();
-
-                // For demonstration purposes, we log the products to the console
-                // You can modify this to send the data to a server or handle it as needed
-                console.log('Wishlist Products:', products);
-                console.log('Customer Name:', customerName);
-                console.log('Customer Email:', customerEmail);
                 $.ajax({
-                        url: '/wishlistgroups/index/share',
-                        type: 'POST',
-                        data: {
-                            itemData: products,
-                            customerName: customerName,
-                            customerEmail: customerEmail,
-                        },
-                        dataType: 'json',
-                        success: function(response) {
-                            // var baseUrl = response.base_url;
-                            // if (response.success) {
-                            //     window.location.replace(baseUrl);
-
-                            // } else {
-                            //     window.location.replace(baseUrl);
-                            // }
-                            console.log(response);
-                        },
-                        error: function(xhr, status, error) {}
-                    });
+                    url: '/wishlistgroups/index/share',
+                    type: 'POST',
+                    data: {
+                        itemData: products,
+                        customerName: customerName,
+                        customerEmail: customerEmail,
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                    },
+                    error: function (xhr, status, error) {
+                    }
+                });
             });
-            $('.action.tocart').on('click', function() {
-    var products = [];
-    
-    // Loop through all the products and gather product IDs
-    $('.product-item').each(function() {
-        var productId = $(this).data('product-id'); // Define productId here
-        products.push({ id: productId });
-    });
-    console.log(products); // Log all products in the array
+            $('.action.tocart').on('click', function () {
+                var products = [];
 
-    // For demonstration purposes, you can send the data to the server or handle it as needed
-    $.ajax({
-        url: '/wishlistgroups/index/tocart',
-        type: 'POST',
-        data: {
-            itemData: products,
-        },
-        dataType: 'json',
-        success: function(response) {
-            console.log(response.message);
-        },
-        error: function(xhr, status, error) {
-            console.log('Error:', error);
-        }
-    });
-});
+                // Loop through all the products and gather product IDs
+                $('.product-item').each(function () {
+                    var productId = $(this).data('product-id'); // Define productId here
+                    products.push({id: productId});
+                });
+                $.ajax({
+                    url: '/wishlistgroups/index/tocart',
+                    type: 'POST',
+                    data: {
+                        itemData: products,
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.product_added == true) {
+                            location.reload();
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                    }
+                });
+            });
+            $('.action.deleteall').on('click', function () {
 
+                var wishlistId = $('.wishlist-id').val();
+                $.ajax({
+                    url: '/wishlistgroups/index/delete',
+                    type: 'POST',
+                    data: {
+                        wishlistId: wishlistId,
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                    }
+                });
+            });
+            $('.action.delete').on('click', function () {
+                var wishlistId = $('.wishlist-id').val();
+                console.log(wishlistId);
+                $.ajax({
+                    url: '/wishlistgroups/index/deletewishlist',
+                    type: 'POST',
+                    data: {
+                        wishlistId: wishlistId,
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        window.location.href = '/wishlist';  // Adjust the URL if needed
+                    },
+                    error: function (xhr, status, error) {
+                    }
+                });
+            });
         });
     });
 </script>

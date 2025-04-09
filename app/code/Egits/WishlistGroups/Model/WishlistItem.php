@@ -1,4 +1,5 @@
 <?php
+
 namespace Egits\WishlistGroups\Model;
 
 use Egits\WishlistGroups\Api\Data\WishlistItemInterface;
@@ -59,7 +60,7 @@ class WishlistItem extends AbstractModel implements WishlistItemInterface, Ident
         return $this->getData(self::WISHLIST_ITEM_ID);
     }
 
-      /**
+    /**
      * Get wishlist_id
      *
      * return int
@@ -79,7 +80,7 @@ class WishlistItem extends AbstractModel implements WishlistItemInterface, Ident
         return $this->getData(self::PRODUCT_ID);
     }
 
-     /**
+    /**
      * Get qty
      *
      * return string
@@ -98,10 +99,12 @@ class WishlistItem extends AbstractModel implements WishlistItemInterface, Ident
     {
         return $this->setData(self::WISHLIST_ID, $wishlistId);
     }
+
     public function setProductId($productId)
     {
-        return $this->setData(self::PRODUCT_ID,$productId);
+        return $this->setData(self::PRODUCT_ID, $productId);
     }
+
     public function setQty($qty)
     {
         return $this->setData(self::QTY, $qty);

@@ -139,15 +139,13 @@
                     showLoader: true,
                     success: function (response) {
                         if (response.success) {
-                            alert('Wishlist Created & Product Added Successfully');
                             popupElement.modal('closeModal');
+                            location.reload();
                         } else {
-                            alert(response.message || 'Error occurred while adding to wishlist.');
                         }
                     },
                     error: function (xhr) {
                         console.error("AJAX Error:", xhr.responseText);
-                        alert('Failed to process the request.');
                     }
                 });
             });
@@ -175,7 +173,6 @@
                     },
                     error: function (xhr) {
                         console.error("Error fetching wishlists:", xhr.responseText);
-                        alert('Failed to load wishlists. Please try again.');
                     }
                 });
             });
@@ -209,15 +206,13 @@
                         showLoader: true,
                         success: function (response) {
                             if (response.success) {
-                                alert('Product added to wishlist');
                                 popupElement.modal('closeModal');
+                                location.reload();
                             } else {
-                                alert(response.message || 'Error adding product.');
                             }
                         },
                         error: function (xhr) {
                             console.error("Error:", xhr.responseText);
-                            alert('Failed to add product to wishlist.');
                         }
                     });
                 }
