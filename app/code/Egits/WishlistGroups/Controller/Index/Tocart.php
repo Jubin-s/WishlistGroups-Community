@@ -24,31 +24,49 @@ use Magento\Framework\App\RequestInterface;
  */
 class Tocart implements ActionInterface, HttpPostActionInterface
 {
-    /** @var SessionFactory */
+    /** 
+     * @var SessionFactory 
+     */
     private $checkoutSession;
 
-    /** @var Cart */
+    /** 
+     * @var Cart 
+     */
     private $cart;
 
-    /** @var CartRepositoryInterface */
+    /** 
+     * @var CartRepositoryInterface 
+     */
     private $cartRepository;
 
-    /** @var ProductRepositoryInterface */
+    /** 
+     * @var ProductRepositoryInterface 
+     */
     private $productRepository;
 
-    /** @var Json */
+    /** 
+     * @var Json 
+     */
     private $json;
 
-    /** @var JsonFactory */
+    /** 
+     * @var JsonFactory 
+     */
     protected $jsonFactory;
 
-    /** @var LoggerInterface */
+    /** 
+     * @var LoggerInterface 
+     */
     protected $logger;
 
-    /** @var ManagerInterface */
+    /** 
+     * @var ManagerInterface 
+     */
     protected $messageManager;
 
-    /** @var QuoteFactory */
+    /** 
+     * @var QuoteFactory 
+     */
     private $quoteFactory;
 
     /**
@@ -129,7 +147,7 @@ class Tocart implements ActionInterface, HttpPostActionInterface
                     if ($product->getTypeId() !== 'simple') {
                         // If the product is not a simple product, show an error message
                         $this->messageManager->addErrorMessage(__('Product "%1" is not a simple product and cannot be added to the cart.', $product->getName()));
-                        continue; // Skip this product and move to the next one
+                        continue; 
                     }
 
                     // Add the product to the quote (cart)
@@ -148,21 +166,18 @@ class Tocart implements ActionInterface, HttpPostActionInterface
 
             // Save the updated quote to the cart repository if any product was added
             if ($productsAdded) {
-                $this->cartRepository->save($quote); // Pass the correct Quote object
+                $this->cartRepository->save($quote);
 
                 // Replace the quote in the session
                 $session->replaceQuote($quote)->unsLastRealOrderId();
                 $this->messageManager->addSuccessMessage(__('Products added to cart'));
             }
-
-            // Return success response
             return $result->setData([
                 'success' => $productsAdded,
                 'product_added' => $productsAdded,
                 'message' => $productsAdded ? __('Products successfully added to your cart.') : __('No products were added to the cart.')
             ]);
         } catch (\Exception $e) {
-            // Log and handle any errors
             $this->logger->error('Error adding products to cart: ' . $e->getMessage());
             $this->messageManager->addErrorMessage(__($e->getMessage()));
 

@@ -9,6 +9,9 @@ use Magento\Customer\Model\Session;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Framework\App\RequestInterface;
 
+/**
+ * Class View
+ */
 class View implements ActionInterface
 {
     protected $wishlistFactory;

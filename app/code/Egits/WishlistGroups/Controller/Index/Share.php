@@ -119,10 +119,7 @@ class Share implements ActionInterface
         try {
             // Send survey email (if applicable)
             $this->logger->info('formdata ' . json_encode($formData));
-
             $this->sendWishlistMail->execute($formData, $additionalData);
-
-            // Add success message
             $this->messageManager->addSuccessMessage(__('Wishlist shared successfully'));
 
             // Return success response
@@ -131,7 +128,6 @@ class Share implements ActionInterface
                 'message' => __('Thank you for your feedback!'),
             ]);
         } catch (LocalizedException $e) {
-            // Log and handle localized exceptions
             $this->logger->error('Survey Submission Error: ' . $e->getMessage());
             $this->messageManager->addErrorMessage(__('Unable to share the wishlist'));
             return $result->setData([
@@ -139,7 +135,6 @@ class Share implements ActionInterface
                 'message' => $e->getMessage()
             ]);
         } catch (\Exception $e) {
-            // Log and handle unexpected exceptions
             $this->logger->error('Unexpected Error in Survey Submission: ' . $e->getMessage());
             $this->messageManager->addErrorMessage(__('Unable to share the wishlist'));
             return $result->setData([

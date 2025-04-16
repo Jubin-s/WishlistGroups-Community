@@ -65,7 +65,7 @@ return [
         'Magento_CmsUrlRewrite' => 1,
         'Magento_CmsUrlRewriteGraphQl' => 1,
         'Magento_CatalogGraphQl' => 1,
-        'Magento_TwoFactorAuth' => 1,
+        'Magento_TwoFactorAuth' => 0,
         'Magento_Checkout' => 1,
         'Magento_UrlRewrite' => 1,
         'Magento_QuoteGraphQl' => 1,
@@ -353,11 +353,7 @@ return [
         'Magento_ThemeGraphQl' => 1,
         'Magento_CmsSampleData' => 1,
         'Magento_Translation' => 1,
-<<<<<<< HEAD
-        'Magento_AdminAdobeImsTwoFactorAuth' => 1,
-=======
         'Magento_AdminAdobeImsTwoFactorAuth' => 0,
->>>>>>> 10522dc... #Implemented save, delete and refactored code
         'Magento_GoogleOptimizer' => 1,
         'Magento_Ups' => 1,
         'Magento_SalesSampleData' => 1,

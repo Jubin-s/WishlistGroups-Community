@@ -8,8 +8,8 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Controller\ResultInterface;
-use Egits\WishlistGroups\Model\WishlistFactory; // WishlistFactory to create model
-use Egits\WishlistGroups\Model\ResourceModel\Wishlist as WishlistResource; // ResourceModel for deleting
+use Egits\WishlistGroups\Model\WishlistFactory; 
+use Egits\WishlistGroups\Model\ResourceModel\Wishlist as WishlistResource; 
 use Egits\WishlistGroups\Model\ResourceModel\WishlistItem\CollectionFactory as WishlistItemCollectionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\App\RequestInterface;
@@ -94,7 +94,7 @@ class Deletewishlist implements ActionInterface
             $wishlistId = $this->request->getParam('wishlistId');
             $customerId = $this->customerSession->getCustomerId();
             $wishlistData = $this->wishlistFactory->create()
-                ->load($wishlistId); // Load the wishlist by its ID
+                ->load($wishlistId); 
 
             if (!$wishlistData->getId() || $wishlistData->getCustomerId() != $customerId) {
                 return $result->setData([
@@ -108,10 +108,8 @@ class Deletewishlist implements ActionInterface
                 ->addFieldToFilter('wishlist_id', $wishlistId);
 
             foreach ($wishlistItemCollection as $item) {
-                $item->delete(); // Delete each item
+                $item->delete();
             }
-
-            // Now delete the wishlist using the ResourceModel
             $this->wishlistResource->delete($wishlistData);
 
             return $result->setData([

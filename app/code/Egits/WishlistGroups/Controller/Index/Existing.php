@@ -16,7 +16,7 @@ use Magento\Framework\App\RequestInterface;
 use Psr\Log\LoggerInterface;
 use Egits\WishlistGroups\Model\ResourceModel\WishlistItem\CollectionFactory;
 use Magento\Framework\Message\ManagerInterface;
-use Egits\WishlistGroups\Model\WishlistItemFactory; // Import the factory
+use Egits\WishlistGroups\Model\WishlistItemFactory; 
 
 /**
  * Class Existing
@@ -63,7 +63,7 @@ class Existing implements ActionInterface
     /**
      * @var WishlistItemFactory
      */
-    protected $wishlistItemFactory; // Inject the factory
+    protected $wishlistItemFactory; 
 
 
     public function __construct(
@@ -76,7 +76,7 @@ class Existing implements ActionInterface
         WishlistItemResource $wishlistItemResource,
         CollectionFactory $collectionFactory,
         ManagerInterface $messageManager,
-        WishlistItemFactory $wishlistItemFactory // Inject the model factory here
+        WishlistItemFactory $wishlistItemFactory 
     )
     {
         $this->jsonFactory = $jsonFactory;
@@ -88,7 +88,7 @@ class Existing implements ActionInterface
         $this->wishlistItemResource = $wishlistItemResource;
         $this->collectionFactory = $collectionFactory;
         $this->messageManager = $messageManager;
-        $this->wishlistItemFactory = $wishlistItemFactory; // Assign the factory
+        $this->wishlistItemFactory = $wishlistItemFactory;
     }
 
     /**
@@ -119,7 +119,6 @@ class Existing implements ActionInterface
                 throw new LocalizedException(__('Product ID is required.'));
             }
 
-            // Load product
             $product = $this->productRepository->getById($productId);
             if (!$product->getId()) {
                 throw new LocalizedException(__('Invalid product.'));
@@ -142,15 +141,15 @@ class Existing implements ActionInterface
                 $existingQty = $existingItem->getQty();
                 $this->logger->info("Current Quantity: " . $existingQty);
                 $existingItem->setQty($existingQty + 1);
-                $this->wishlistItemResource->save($existingItem);  // Save using resource model
+                $this->wishlistItemResource->save($existingItem);  
                 $this->logger->info("Updated Quantity: " . $existingItem->getQty());
             } else {
                 // If item is not present, create a new item using the factory
-                $newItem = $this->wishlistItemFactory->create(); // Use the factory to create the model
+                $newItem = $this->wishlistItemFactory->create(); 
                 $newItem->setWishlistId($wishlistId)
                         ->setProductId($productId)
                         ->setQty(1);
-                $this->wishlistItemResource->save($newItem);  // Save the new item using resource model
+                $this->wishlistItemResource->save($newItem);  
                 $this->logger->info("New item added with qty 1.");
             }
 

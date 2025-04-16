@@ -80,14 +80,10 @@ class WishlistProductData implements ArgumentInterface
                     'name' => $wishlistItem->getName()
                 ];
             }
-
             // Return the wishlist groups as an array
             return $wishlistGroups;
         }
-
         // Return null if no wishlists found
         return null;
     }
-
-
 }

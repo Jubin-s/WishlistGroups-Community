@@ -103,8 +103,8 @@ class Save implements ActionInterface
         ScopeConfigInterface $scopeConfig,
         EgitsWishlist $egitsWishlist,
         EgitsWishlistItem $egitsWishlistItem,
-        WishlistResourceModel $wishlistResourceModel,  // Inject the Wishlist Resource Model
-        WishlistItemResourceModel $wishlistItemResourceModel, // Inject the WishlistItem Resource Model
+        WishlistResourceModel $wishlistResourceModel,
+        WishlistItemResourceModel $wishlistItemResourceModel,
         ManagerInterface $messageManager
     )
     {
@@ -118,8 +118,8 @@ class Save implements ActionInterface
         $this->scopeConfig = $scopeConfig;
         $this->egitsWishlist = $egitsWishlist;
         $this->egitsWishlistItem = $egitsWishlistItem;
-        $this->wishlistResourceModel = $wishlistResourceModel;  // Assign the Wishlist Resource Model
-        $this->wishlistItemResourceModel = $wishlistItemResourceModel; // Assign the WishlistItem Resource Model
+        $this->wishlistResourceModel = $wishlistResourceModel; 
+        $this->wishlistItemResourceModel = $wishlistItemResourceModel; 
         $this->messageManager = $messageManager;
     }
 
@@ -144,7 +144,6 @@ class Save implements ActionInterface
             $wishlistName = $this->request->getParam('name');
             $productId = $this->request->getParam('product');
 
-            // Log incoming data for debugging
             $this->logger->info("Received Data: Wishlist Name - " . $wishlistName . ", Product ID - " . $productId);
 
             if (!$wishlistName) {
@@ -174,7 +173,7 @@ class Save implements ActionInterface
             // Create the Wishlist and save it using the resource model
             $this->egitsWishlist->setCustomerId($customerId)
                 ->setName($wishlistName);
-            $this->wishlistResourceModel->save($this->egitsWishlist);  // Save using the resource model
+            $this->wishlistResourceModel->save($this->egitsWishlist);
 
             $wishlistId = $this->egitsWishlist->getId();
             $this->logger->info("Wishlist id: " . $wishlistId);
@@ -189,7 +188,7 @@ class Save implements ActionInterface
             $this->egitsWishlistItem->setWishlistId($wishlistId)
                 ->setProductId($productId)
                 ->setQty(1);
-            $this->wishlistItemResourceModel->save($this->egitsWishlistItem);  // Save using the resource model
+            $this->wishlistItemResourceModel->save($this->egitsWishlistItem); 
 
             $this->messageManager->addSuccessMessage(__('Wishlist Created & Product Added Successfully.'));
             return $result->setData([
